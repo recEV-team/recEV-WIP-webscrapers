@@ -1,4 +1,4 @@
-**The search engine is unavailable between 02:00 a.m. and 06:00 a.m. EST due to maintenance. **
+**The search engine is unavailable between 02:00 a.m. and 06:00 a.m. EST due to maintenance.**
 
 Method slightly different to others.
 
@@ -31,4 +31,4 @@ data which needs to be scraped from charity site:
 
 If charity type is going to be stored in the future problem may arise as this is stored on a different page than the one being scraped
 
-TODO: Flask
+TODO: Flask, clean scraped values, merge JSON files
