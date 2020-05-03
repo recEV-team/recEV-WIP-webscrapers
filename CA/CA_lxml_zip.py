@@ -13,23 +13,32 @@ import grequests
 from lxml.html.clean import Cleaner
 from flask import Flask, jsonify, Response
 
-
 '''
-The search engine is unavailable between 02:00 a.m. and 06:00 a.m. EST due to maintenance. Please try again during operating hours.
+The search engine is unavailable between 02:00 a.m. and 06:00 a.m. EST due to maintenance. 
 '''
-
-def returnBN(value):
-    value = re.search("[0-9]*RR[0-9]*", str(value))
-    re.purge()
-    return value
 
 def splitTabs(value):
+    re.purge()
     return re.split(r"\\t|\\r",value)
 
-def scrapeDetail(value):
+def scrapeQuickView(broth): ##TODO: clean variables, store in JSON file
 
+    def checkListExists(value):
+            if len(value) :
+                return value[0].text_content()      #considered performing xpath here for 
+            else:                                   #briefness, but will increase computation time
+                return ""
 
-    print(value)
+    broth = lxml.html.fromstring(broth)
+    
+    websiteURL = checkListExists(broth.find_class("col-xs-12 col-sm-6 col-md-6 col-lg-9 breakword"))
+    print(websiteURL)
+   
+    longDescription = checkListExists(broth.xpath("//p[@id='ongoingprograms']"))
+    print(longDescription)
+
+    
+
 
 headers = {"user-agent": "Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101 Firefox/68.0",
             "referer": "https://apps.cra-arc.gc.ca/ebci/hacc/srch/pub/advncdSrch"}
@@ -59,7 +68,7 @@ with zipfile.ZipFile("./zip/4.zip") as zippedFile:
     fileName = zippedFile.namelist()[2]
     zippedFile.extract(fileName)
 
-completeJSON =[]
+completeZipJSON =[]
 quickViewList = []
 p = open(fileName,"rb") 
 for line in p.readlines():         ##TODO: USE requests-futures INSTEAD OF grequests
@@ -101,14 +110,10 @@ for line in p.readlines():         ##TODO: USE requests-futures INSTEAD OF grequ
 with open("./json/1.json","w",encoding="utf8") as JSONfile:
     json.dump(completeZipJSON, JSONfile, ensure_ascii=False)
 
-'''
 quickViewReq = grequests.imap(quickViewList)
 #detailReq = grequests.imap(detailList)
-'''
 
-# for request in detailReq:
-#     scrapeDetail(request.text)
+for request in quickViewReq:
+    scrapeQuickView(request.text)
 
-# print(URLlist)
-#BN/Registration Number	Charity Name	Charity Status	Effective Date of Status	Sanction	Designation Code	Category Code	Address	City	Province	Country	Postal Code	
-#b"139764641RR0001\tLE COMIT\xc9 D'ACTION B\xc9N\xc9VOLE DE ST-CYPRIEN INC.\tRegistered\t1990-04-01\t\t0001\t0001\t112 RUE DE L'\xc9GLISE\tST-CYPRIEN\tQC\tCA\tG0L2P0\r\n
+##TODO: covert JSON files to dictionary and then merge

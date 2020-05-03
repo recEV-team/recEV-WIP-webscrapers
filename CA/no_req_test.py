@@ -16,27 +16,40 @@ from flask import Flask, jsonify, Response
 def splitTabs(value):
     return re.split(r"\\t|\\r",value)
 
+quickViewURL = "https://apps.cra-arc.gc.ca/ebci/hacc/srch/pub/dsplyQckVw?selectedCharityBn="
+
 quickViewList = []
 p = open("Charities_results_2020-05-03-09-59-44.txt","rb") 
 for line in p.readlines():         ##TODO: USE requests-futures INSTEAD OF grequests
     
-    rea = splitTabs(str(line))
+    bnAccntNmbr = str(line)[2:17]
+    quickViewList.append(grequests.get(quickViewURL+bnAccntNmbr))
 
-    print(rea)
+    # rea = splitTabs(str(line))
+    # print(rea)
     
-    # bnAccntNmbr = str(line)[2:17]
     # #detailList.append(grequests.get(detailsURL+bnAccntNmbr))
-    # quickViewList.append(grequests.get(quickViewURL+bnAccntNmbr))
     # print(line)
 
-#b"139764641RR0001\tLE COMIT\xc9 D'ACTION B\xc9N\xc9VOLE DE ST-CYPRIEN INC.\tRegistered\t1990-04-01\t\t0001\t0001\t112 RUE DE L'\xc9GLISE\tST-CYPRIEN\tQC\tCA\tG0L2P0\r\n
+def scrapeQuickView(broth):
 
-#detailReq = grequests.imap(detailList)
+    def checkListExists(value):
+            if len(value) :
+                return value[0].text_content()      #considered performing xpath here for 
+            else:                                   #briefness, but will increase computation time
+                return ""
+
+    broth = lxml.html.fromstring(broth)
+    
+    websiteURL = checkListExists(broth.find_class("col-xs-12 col-sm-6 col-md-6 col-lg-9 breakword"))
+    print(websiteURL)
+   
+    longDescription = checkListExists(broth.xpath("//p[@id='ongoingprograms']"))
+    print(longDescription)
 
 quickViewReq = grequests.imap(quickViewList)
 
-
-# for request in detailReq:
-#     scrapeDetail(request.text)
+for request in quickViewReq:
+    scrapeQuickView(request.text)
 
 # print(URLlist)

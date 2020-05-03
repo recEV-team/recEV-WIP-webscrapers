@@ -1,3 +1,5 @@
+**The search engine is unavailable between 02:00 a.m. and 06:00 a.m. EST due to maintenance. **
+
 Method slightly different to others.
 
 Post request is made to download zip file, extracted and BN is stored.
