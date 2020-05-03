@@ -1,6 +1,6 @@
-import gevent.monkey
-gevent.monkey.patch_all()
-
+'''
+Author: Cosmic-Onion (Isy)
+'''
 import requests
 import re
 import json
@@ -8,6 +8,8 @@ import lxml.html
 import grequests
 from flask import Flask, jsonify, Response
 from lxml.html.clean import Cleaner
+import gevent.monkey
+gevent.monkey.patch_all()
 
 app = Flask(__name__)
 @app.route("/api/uk_data", methods=["GET"])

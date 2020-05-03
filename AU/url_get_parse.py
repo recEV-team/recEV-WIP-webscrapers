@@ -1,3 +1,7 @@
+'''
+Author: Cosmic-Onion (Isy)
+'''
+
 import requests
 import json
 from flask import jsonify, Flask

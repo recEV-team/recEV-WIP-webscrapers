@@ -1,6 +1,6 @@
-import gevent.monkey
-gevent.monkey.patch_all()
-
+'''
+Author: Cosmic-Onion (Isy)
+'''
 import re
 import requests
 import lxml.html
@@ -8,9 +8,10 @@ import json
 import math
 import zipfile
 import grequests
-
 from lxml.html.clean import Cleaner
 from flask import Flask, jsonify, Response
+import gevent.monkey
+gevent.monkey.patch_all()
 
 '''
 The search engine is unavailable between 02:00 a.m. and 06:00 a.m. EST due to maintenance. Please try again during operating hours.
