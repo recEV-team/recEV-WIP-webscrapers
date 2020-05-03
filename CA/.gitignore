@@ -1,4 +1,4 @@
-*/json
+*/json/*
 */zip
-*.zip
+*/*.zip
 *.txt
