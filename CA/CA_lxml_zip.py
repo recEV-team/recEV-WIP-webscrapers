@@ -21,7 +21,11 @@ def splitTabs(value):
     re.purge()
     return re.split(r"\\t|\\r",value)
 
+
 def scrapeQuickView(broth): ##TODO: clean variables, store in JSON file
+
+    def cleanWhiteSpaces(value):
+        return re.sub("(Ongoing programs: )| (?!w*)|([\t\n\r\f\v])|(\s*$)","",value)
 
     def checkListExists(value):
             if len(value) :
@@ -30,12 +34,29 @@ def scrapeQuickView(broth): ##TODO: clean variables, store in JSON file
                 return ""
 
     broth = lxml.html.fromstring(broth)
-    
-    websiteURL = checkListExists(broth.find_class("col-xs-12 col-sm-6 col-md-6 col-lg-9 breakword"))
+
+    buisnessRegNumber = cleanWhiteSpaces(checkListExists(broth.find_class("col-xs-12 col-sm-6 col-md-6 col-lg-9"))) #luckily this is the first on the page
+    print(buisnessRegNumber)
+
+    websiteURL = cleanWhiteSpaces(checkListExists(broth.find_class("col-xs-12 col-sm-6 col-md-6 col-lg-9 breakword")))
     print(websiteURL)
    
-    longDescription = checkListExists(broth.xpath("//p[@id='ongoingprograms']"))
+    longDescription = cleanWhiteSpaces(checkListExists(broth.xpath("//p[@id='ongoingprograms']")))
     print(longDescription)
+
+    charityJSON = {
+        "buisnessRegNumber": buisnessRegNumber,
+        "longDescription" : longDescription,
+        "websiteURL" :  websiteURL,
+    }
+
+    #TODO: find cell in completeZipJSON and append these values
+
+    quickViewJSON.append(charityJSON)
+
+    with open("./json/quick6.json","a",encoding="utf8") as JSONfile:
+        json.dump(charityJSON, JSONfile, ensure_ascii=False)
+
 
     
 
@@ -83,7 +104,7 @@ for line in p.readlines():         ##TODO: USE requests-futures INSTEAD OF grequ
     postcode = splitLine[11]
     buisnessRegNumber = str(line)[2:17]       #easier to pull straight from string rather than regex
     
-    charityJSON = {
+    charityJSON = {                                 #TODO: clean double slashes, so can be encoded in utf8 properly
             "charityLegalName": charityLegalName,
             "buisnessRegNumber": buisnessRegNumber,
             "addressLine1": addressLine1, 
@@ -107,13 +128,18 @@ for line in p.readlines():         ##TODO: USE requests-futures INSTEAD OF grequ
     quickViewList.append(grequests.get(quickViewURL+buisnessRegNumber))
     # detailList.append(grequests.get(detailsURL+bnAccntNmbr))
 
-with open("./json/1.json","w",encoding="utf8") as JSONfile:
+#TODO: remove first value in lists above
+
+with open("./json/2.json","w",encoding="utf8") as JSONfile:
     json.dump(completeZipJSON, JSONfile, ensure_ascii=False)
 
-quickViewReq = grequests.imap(quickViewList)
+quickViewReq = grequests.imap(quickViewList, size=4)
 #detailReq = grequests.imap(detailList)
 
+quickViewJSON = []
 for request in quickViewReq:
     scrapeQuickView(request.text)
+
+
 
 ##TODO: covert JSON files to dictionary and then merge
