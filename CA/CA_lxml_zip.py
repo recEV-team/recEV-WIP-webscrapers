@@ -17,11 +17,6 @@ from flask import Flask, jsonify, Response
 The search engine is unavailable between 02:00 a.m. and 06:00 a.m. EST due to maintenance. 
 '''
 
-def splitTabs(value):
-    re.purge()
-    return re.split(r"\\t|\\r",value)
-
-
 def scrapeQuickView(broth): ##TODO: clean variables, store in JSON file
 
     def cleanWhiteSpaces(value):
@@ -44,38 +39,26 @@ def scrapeQuickView(broth): ##TODO: clean variables, store in JSON file
     longDescription = cleanWhiteSpaces(checkListExists(broth.xpath("//p[@id='ongoingprograms']")))
     print(longDescription)
 
-    charityJSON = {
-        "buisnessRegNumber": buisnessRegNumber,
-        "longDescription" : longDescription,
-        "websiteURL" :  websiteURL,
-    }
+    for z in zipJSON:
+        if z["buisnessRegNumber"] == buisnessRegNumber:
+            z["websiteURL"] = websiteURL
+            z["longDescription"] = longDescription
 
-    #TODO: find cell in completeZipJSON and append these values
-
-    quickViewJSON.append(charityJSON)
-
-    with open("./json/quick6.json","a",encoding="utf8") as JSONfile:
-        json.dump(charityJSON, JSONfile, ensure_ascii=False)
-
-
-    
-
+    # with open("./json/quick6.json","a",encoding="utf8") as JSONfile:
+    #     json.dump(zipJSON, JSONfile, ensure_ascii=False)
 
 headers = {"user-agent": "Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101 Firefox/68.0",
             "referer": "https://apps.cra-arc.gc.ca/ebci/hacc/srch/pub/advncdSrch"}
 
 URL = "https://apps.cra-arc.gc.ca/ebci/hacc/srch/pub/advncdSrch?"
-zipPost = "https://apps.cra-arc.gc.ca/ebci/hacc/srch/pub/dwnldZp"
-detailsURL = "https://apps.cra-arc.gc.ca/ebci/hacc/srch/pub/chrtydtls?selectedCharityBn="
-quickViewURL = "https://apps.cra-arc.gc.ca/ebci/hacc/srch/pub/dsplyQckVw?selectedCharityBn="
 
 req = requests.Session()
+
 searchPage = req.get(URL).text
-
 chowder = lxml.html.fromstring(searchPage)
-
 token = chowder.xpath("//input[@name='token']")[0].value
 
+zipPost = "https://apps.cra-arc.gc.ca/ebci/hacc/srch/pub/dwnldZp"
 file = req.post(zipPost, data={"struts.token.name":"token", "token":token, "q.srchNm":"",       #select only registered, charities
                                 "q.bnRtNmbr":"", "q.bnAccntNmbr":"", "q.stts":"0007", 
                                 "q.sttsEffctvDt":"", "q.snctnTypCd":"", "q.cty":"",  
@@ -89,12 +72,17 @@ with zipfile.ZipFile("./zip/4.zip") as zippedFile:
     fileName = zippedFile.namelist()[2]
     zippedFile.extract(fileName)
 
-completeZipJSON =[]
+detailsURL = "https://apps.cra-arc.gc.ca/ebci/hacc/srch/pub/chrtydtls?selectedCharityBn="
+quickViewURL = "https://apps.cra-arc.gc.ca/ebci/hacc/srch/pub/dsplyQckVw?selectedCharityBn="
+
+zipJSON =[]
 quickViewList = []
 p = open(fileName,"rb") 
+
 for line in p.readlines():         ##TODO: USE requests-futures INSTEAD OF grequests
-    
-    splitLine = splitTabs(str(line))    
+
+    splitLine = re.split(r"\\t|\\r",str(line))
+    re.purge()
 
     charityLegalName = splitLine[1]
     addressLine1 = splitLine[7]
@@ -112,26 +100,15 @@ for line in p.readlines():         ##TODO: USE requests-futures INSTEAD OF grequ
             "state": state,
             "country": country,
             "postcode": postcode,
-            # "imageURL": imageURL,                 //the rest to be scraped online
-            # "charityWebsite": charityWebsite,
-            # "smallDescription": shortDescription,
-            # "longDescription": longDescription,
-            # "telephone": str(telephone),
-            # "fax": fax,
-            # "charityNumber": charityNum,
-            # "facebook": facebook,
-            # "twitter": twitter
         }
 
-    completeZipJSON.append(charityJSON)
+    zipJSON.append(charityJSON)
 
     quickViewList.append(grequests.get(quickViewURL+buisnessRegNumber))
     # detailList.append(grequests.get(detailsURL+bnAccntNmbr))
 
-#TODO: remove first value in lists above
-
-with open("./json/2.json","w",encoding="utf8") as JSONfile:
-    json.dump(completeZipJSON, JSONfile, ensure_ascii=False)
+zipJSON.pop(0)          #remove txt file header
+quickViewList.pop(0) 
 
 quickViewReq = grequests.imap(quickViewList, size=4)
 #detailReq = grequests.imap(detailList)
@@ -140,6 +117,6 @@ quickViewJSON = []
 for request in quickViewReq:
     scrapeQuickView(request.text)
 
+with open("./json/conTest1.json","w",encoding="utf8") as JSONfile:
+    json.dump(zipJSON, JSONfile, ensure_ascii=False)
 
-
-##TODO: covert JSON files to dictionary and then merge
