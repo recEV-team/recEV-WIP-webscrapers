@@ -20,6 +20,85 @@ app = Flask(__name__)
 @app.route("/api/ca_data", methods=["GET"])
 
 def get_tasks():
+   
+
+    headers = {"user-agent": "Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101 Firefox/68.0",
+                "referer": "https://apps.cra-arc.gc.ca/ebci/hacc/srch/pub/advncdSrch"}
+
+    URL = "https://apps.cra-arc.gc.ca/ebci/hacc/srch/pub/advncdSrch?"
+
+    req = requests.Session()
+
+    searchPage = req.get(URL).text
+    chowder = lxml.html.fromstring(searchPage)
+    token = chowder.xpath("//input[@name='token']")[0].value
+
+    zipPost = "https://apps.cra-arc.gc.ca/ebci/hacc/srch/pub/dwnldZp"
+    file = req.post(zipPost, data={"struts.token.name":"token", "token":token, "q.srchNm":"",       #select only registered, charities
+                                    "q.bnRtNmbr":"", "q.bnAccntNmbr":"", "q.stts":"0007", 
+                                    "q.sttsEffctvDt":"", "q.snctnTypCd":"", "q.cty":"",  
+                                    "q.prvncSttCd":"", "q.pstlZpCd":"", "q.dsgntnTyp":"0001", "q.chrtyTyp":"", 
+                                    "q.chrtyCtgry":"", "p":"1"}).content
+
+    with open("./zip/4.zip", 'wb') as download:
+        download.write(file)
+
+    with zipfile.ZipFile("./zip/4.zip") as zippedFile:
+        fileName = zippedFile.namelist()[2]
+        zippedFile.extract(fileName)
+
+    #detailsURL = "https://apps.cra-arc.gc.ca/ebci/hacc/srch/pub/chrtydtls?selectedCharityBn="
+    quickViewURL = "https://apps.cra-arc.gc.ca/ebci/hacc/srch/pub/dsplyQckVw?selectedCharityBn="
+
+    zipJSON =[]
+    quickViewList = []
+    p = open(fileName,"rb") 
+
+    for line in p.readlines():         ##TODO: USE requests-futures INSTEAD OF grequests
+
+        line = re.sub('\\\\"','',line.decode("unicode-escape"))
+
+        splitLine = re.split(r"\t|\r",line)
+        re.purge()
+        buisnessRegNumber = splitLine[0]  
+        charityLegalName = splitLine[1]
+        addressLine1 = splitLine[7]
+        city = splitLine[8]
+        state = splitLine[9]
+        country = splitLine[10]
+        postcode = splitLine[11]
+        '''    
+        with open("./json/nameTest5.json","a",encoding="utf8") as JSONfile:
+            json.dump(charityLegalName, JSONfile, ensure_ascii=False)
+        #print(charityLegalName)
+        '''
+        charityJSON = {                                 #TODO: clean double slashes, so can be encoded in utf8 properly
+                "charityLegalName": charityLegalName,
+                "buisnessRegNumber": buisnessRegNumber,
+                "addressLine1": addressLine1, 
+                "city": city,
+                "state": state,
+                "country": country,
+                "postcode": postcode,
+                # "imageURL": imageURL,                 #the rest to be scraped online
+                # "charityWebsite": charityWebsite,
+                # "smallDescription": shortDescription,
+                # "longDescription": longDescription,
+                # "telephone": str(telephone),
+                # "fax": fax,
+                # "charityNumber": charityNum,
+                # "facebook": facebook,
+                # "twitter": twitter
+            }
+
+        zipJSON.append(charityJSON)
+
+        quickViewList.append(grequests.get(quickViewURL+buisnessRegNumber))
+        # detailList.append(grequests.get(detailsURL+bnAccntNmbr))
+
+    zipJSON.pop(0)          #remove txt file header
+    quickViewList.pop(0) 
+
     def scrapeQuickView(broth): ##TODO: clean variables, store in JSON file
 
         def cleanWhiteSpaces(value):
@@ -52,87 +131,16 @@ def get_tasks():
         # with open("./json/quick6.json","a",encoding="utf8") as JSONfile:
         #     json.dump(zipJSON, JSONfile, ensure_ascii=False)
 
-    headers = {"user-agent": "Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101 Firefox/68.0",
-                "referer": "https://apps.cra-arc.gc.ca/ebci/hacc/srch/pub/advncdSrch"}
-
-    URL = "https://apps.cra-arc.gc.ca/ebci/hacc/srch/pub/advncdSrch?"
-
-    req = requests.Session()
-
-    searchPage = req.get(URL).text
-    chowder = lxml.html.fromstring(searchPage)
-    token = chowder.xpath("//input[@name='token']")[0].value
-
-    zipPost = "https://apps.cra-arc.gc.ca/ebci/hacc/srch/pub/dwnldZp"
-    file = req.post(zipPost, data={"struts.token.name":"token", "token":token, "q.srchNm":"",       #select only registered, charities
-                                    "q.bnRtNmbr":"", "q.bnAccntNmbr":"", "q.stts":"0007", 
-                                    "q.sttsEffctvDt":"", "q.snctnTypCd":"", "q.cty":"",  
-                                    "q.prvncSttCd":"", "q.pstlZpCd":"", "q.dsgntnTyp":"0001", "q.chrtyTyp":"", 
-                                    "q.chrtyCtgry":"", "p":"1"}).content
-
-    with open("./zip/4.zip", 'wb') as download:
-        download.write(file)
-
-    with zipfile.ZipFile("./zip/4.zip") as zippedFile:
-        fileName = zippedFile.namelist()[2]
-        zippedFile.extract(fileName)
-
-    detailsURL = "https://apps.cra-arc.gc.ca/ebci/hacc/srch/pub/chrtydtls?selectedCharityBn="
-    quickViewURL = "https://apps.cra-arc.gc.ca/ebci/hacc/srch/pub/dsplyQckVw?selectedCharityBn="
-
-    zipJSON =[]
-    quickViewList = []
-    p = open(fileName,"rb") 
-
-    for line in p.readlines():         ##TODO: USE requests-futures INSTEAD OF grequests
-
-        splitLine = re.split(r"\t|\r",line.decode("unicode-escape"))
-        re.purge()
-
-        charityLegalName = splitLine[1]
-
-        with open("./json/nameTest5.json","a",encoding="utf8") as JSONfile:
-            json.dump(charityLegalName, JSONfile, ensure_ascii=False)
-        #print(charityLegalName)
-        addressLine1 = splitLine[7]
-        city = splitLine[8]
-        state = splitLine[9]
-        country = splitLine[10]
-        postcode = splitLine[11]
-        buisnessRegNumber = str(line)[2:17]       #easier to pull straight from string rather than regex
-        
-        charityJSON = {                                 #TODO: clean double slashes, so can be encoded in utf8 properly
-                "charityLegalName": charityLegalName,
-                "buisnessRegNumber": buisnessRegNumber,
-                "addressLine1": addressLine1, 
-                "city": city,
-                "state": state,
-                "country": country,
-                "postcode": postcode,
-            }
-
-        zipJSON.append(charityJSON)
-
-        quickViewList.append(grequests.get(quickViewURL+buisnessRegNumber))
-        # detailList.append(grequests.get(detailsURL+bnAccntNmbr))
-
-    zipJSON.pop(0)          #remove txt file header
-    quickViewList.pop(0) 
-
     quickViewReq = grequests.imap(quickViewList, size=4)
     #detailReq = grequests.imap(detailList)
 
     quickViewJSON = []
     completeJSON = []
-    g = 0
     for request in quickViewReq:
-        if g == 50:
-            break
         scrapeQuickView(request.text)
-        g = g + 1
 
-    with open("./json/conTest6.json","w",encoding="utf8") as JSONfile:
-        json.dump(completeJSON, JSONfile, ensure_ascii=False)
+    # with open("./json/conTest6.json","w",encoding="utf8") as JSONfile:
+    #     json.dump(completeJSON, JSONfile, ensure_ascii=False)
 
     return jsonify(completeJSON)
 

@@ -30,4 +30,4 @@ data which needs to be scraped from charity site:
 
 If charity type is going to be stored in the future problem may arise as this is stored on a different page than the one being scraped
 
-TODO: Flask, fix double backslash values as they are not being decoded to utf8, clean up zip & text files after use
+TODO: clean up zip & text files after use

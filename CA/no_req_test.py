@@ -27,14 +27,16 @@ for line in p.readlines():         ##TODO: USE requests-futures INSTEAD OF grequ
     # re.purge()
     # print('\n')
     # print(cleanedLine)
-    
-    splitLine = re.split(r"\t|\r",line.decode('unicode-escape'))
+    line = re.sub('\\\\"','',line.decode("unicode-escape"))
+
+    splitLine = re.split(r"\t|\r",line)
+    print(splitLine)
     re.purge()   
 
     charityLegalName = splitLine[1]
 
-    with open("./json/nameTest8.json","a",encoding="utf8") as JSONfile:
-        json.dump(charityLegalName, JSONfile, ensure_ascii=False)
+    # with open("./json/nameTest8.json","a",encoding="utf8") as JSONfile:
+    #     json.dump(charityLegalName, JSONfile, ensure_ascii=False)
 
     addressLine1 = splitLine[7]
     city = splitLine[8]
