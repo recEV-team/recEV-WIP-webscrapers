@@ -20,12 +20,22 @@ quickViewURL = "https://apps.cra-arc.gc.ca/ebci/hacc/srch/pub/dsplyQckVw?selecte
 
 zipJSON = []
 quickViewList = []
-p = open("Charities_results_2020-05-06-10-41-43.txt","rb") 
+p = open("Charities_results_2020-05-06-10-41-43.txt","rb")
 for line in p.readlines():         ##TODO: USE requests-futures INSTEAD OF grequests
     
-    splitLine = splitTabs(str(line))    
+    # cleanedLine = re.sub('\\\\(?=\\\\)','',str(line))
+    # re.purge()
+    # print('\n')
+    # print(cleanedLine)
+    
+    splitLine = re.split(r"\t|\r",line.decode('unicode-escape'))
+    re.purge()   
 
     charityLegalName = splitLine[1]
+
+    with open("./json/nameTest8.json","a",encoding="utf8") as JSONfile:
+        json.dump(charityLegalName, JSONfile, ensure_ascii=False)
+
     addressLine1 = splitLine[7]
     city = splitLine[8]
     state = splitLine[9]
@@ -81,7 +91,6 @@ def scrapeQuickView(broth): ##TODO: clean variables, store in JSON file
 
     for z in zipJSON:
         if z["buisnessRegNumber"] == buisnessRegNumber:
-            
             z["websiteURL"] = websiteURL
             z["longDescription"] = longDescription
             completeJSON.append(z)

@@ -86,15 +86,14 @@ def get_tasks():
 
     for line in p.readlines():         ##TODO: USE requests-futures INSTEAD OF grequests
 
-        cleanedLine = re.sub('\\\\\\\\','\\\\',str(line))
-        re.purge()
-        
-        
-        splitLine = re.split(r"\\t|\\r",cleanedLine)
+        splitLine = re.split(r"\t|\r",line.decode("unicode-escape"))
         re.purge()
 
         charityLegalName = splitLine[1]
-        print(charityLegalName)
+
+        with open("./json/nameTest5.json","a",encoding="utf8") as JSONfile:
+            json.dump(charityLegalName, JSONfile, ensure_ascii=False)
+        #print(charityLegalName)
         addressLine1 = splitLine[7]
         city = splitLine[8]
         state = splitLine[9]
@@ -127,7 +126,7 @@ def get_tasks():
     completeJSON = []
     g = 0
     for request in quickViewReq:
-        if g == 5:
+        if g == 50:
             break
         scrapeQuickView(request.text)
         g = g + 1
