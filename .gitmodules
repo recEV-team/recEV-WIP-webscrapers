@@ -1,0 +1,3 @@
+[submodule "US/990-xml-database"]
+	path = US/990-xml-database
+	url = https://github.com/jsfenfen/990-xml-database/
