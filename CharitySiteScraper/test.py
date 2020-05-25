@@ -18,6 +18,27 @@ website_json.close()
 def find_external_link(search_term,value):
     return re.match(search_term,value)
 
+def clean_link(website):
+    websites = re.split("; |;%20", website)
+    
+    if len(websites) > 1:
+        try:
+            websites.remove("")
+        except:
+            pass
+        
+        for site in websites:
+            print(x,"\t",site)
+        
+    
+    
+    
+    # social_media = re.search("(facebook)|(instagram)|(twitter)",website)
+    # if social_media:
+    #     print(social_media.group(0))
+    #     yield match.group(1) #
+
+
 for charity in websites_load:
     website = charity["charityWebsite"] 
     '''
@@ -29,13 +50,16 @@ for charity in websites_load:
     replace "\#" with "/"
     replace "wwww" & "ww" with "www"
     '''
+    clean_link(website)
+    continue
+
     if website.find("http") == -1:      
         website = "http://" + website    #https may not be available, security doesn't matter so much for get
-    print(website)
+    # print(website)
 
     with open("bruh.txt","a") as txtfile:
         txtfile.write(website+"\n")
-    continue
+    
 
     charity_legal_name = charity["charityLegalName"]
 
@@ -45,7 +69,7 @@ for charity in websites_load:
         #TODO: logic to tell calling file that site link is
         continue
 
-    if site_get.status_code == 200 || 300:
+    if site_get.status_code == 200: #add logic for redirects
         root_html = lxml.html.fromstring(site_get.text)
         # print(root_html)
         for link in root_html.iterlinks():
